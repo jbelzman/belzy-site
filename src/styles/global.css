@@ -1,0 +1,277 @@
+/* ============================================================
+   belzy.net — global styles
+   Design tokens + reset + base typography
+   ============================================================ */
+
+@import url('https://rsms.me/inter/inter.css');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap');
+
+:root {
+  /* ---------- color ---------- */
+  --c-bg:        #0B0F1A;
+  --c-bg-soft:   #0F1422;
+  --c-surface:   #141A2B;
+  --c-surface-2: #1A2138;
+  --c-border:    #1F2940;
+  --c-border-bright: #2D3957;
+  --c-text:      #E6E9F2;
+  --c-text-mute: #9AA3B8;
+  --c-text-dim:  #6B7490;
+
+  --c-accent:    #1E5BD8;
+  --c-accent-2:  #4A82E6;
+  --c-accent-dim: #1E5BD833;
+  --c-red:       #E63946;
+  --c-success:   #3FB984;
+
+  /* ---------- type ---------- */
+  --f-sans: 'Inter', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --f-serif: 'IBM Plex Serif', Georgia, serif;
+
+  /* ---------- space (8pt) ---------- */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --s-10: 8rem;
+
+  /* ---------- layout ---------- */
+  --w-page: 1120px;
+  --w-prose: 720px;
+
+  /* ---------- motion ---------- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --d-1: 120ms;
+  --d-2: 240ms;
+  --d-3: 400ms;
+}
+
+/* Use Inter variable when available */
+@supports (font-variation-settings: normal) {
+  :root { --f-sans: 'InterVariable', 'Inter', system-ui, sans-serif; }
+}
+
+/* ---------- reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--f-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(30, 91, 216, 0.08), transparent 70%),
+    var(--c-bg);
+  background-attachment: fixed;
+}
+
+/* subtle grid texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+/* film grain — very subtle */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' /%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+main, header, footer, nav { position: relative; z-index: 2; }
+
+img, svg, video { display: block; max-width: 100%; height: auto; }
+
+/* ---------- type scale ---------- */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--c-text);
+}
+
+h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); letter-spacing: -0.035em; line-height: 1.02; }
+h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); letter-spacing: -0.025em; }
+h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); letter-spacing: -0.015em; }
+h4 { font-size: 1.125rem; }
+
+p { margin: 0 0 1em; color: var(--c-text); }
+p:last-child { margin-bottom: 0; }
+
+a {
+  color: var(--c-text);
+  text-decoration: none;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: color var(--d-1) var(--ease);
+}
+
+a:hover { color: var(--c-accent-2); }
+
+/* mono utility */
+.mono {
+  font-family: var(--f-mono);
+  font-feature-settings: 'zero', 'ss02';
+  letter-spacing: 0;
+}
+
+/* eyebrow label — Plex Mono uppercase */
+.eyebrow {
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-text-mute);
+}
+
+/* serif pull quote */
+.serif {
+  font-family: var(--f-serif);
+  font-style: italic;
+}
+
+/* ---------- focus ---------- */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* skip link */
+.skip {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  background: var(--c-accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  z-index: 1000;
+  font-family: var(--f-mono);
+  font-size: 0.875rem;
+}
+.skip:focus { top: 1rem; }
+
+/* ---------- layout helpers ---------- */
+.page {
+  max-width: var(--w-page);
+  margin: 0 auto;
+  padding: 0 var(--s-5);
+}
+
+.prose {
+  max-width: var(--w-prose);
+}
+
+.section {
+  padding: var(--s-9) 0;
+}
+
+@media (max-width: 768px) {
+  .section { padding: var(--s-8) 0; }
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0.75rem 1.25rem;
+  font-family: var(--f-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--c-border-bright);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--c-text);
+  cursor: pointer;
+  transition: all var(--d-1) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--c-accent);
+  transform: translateY(101%);
+  transition: transform var(--d-2) var(--ease);
+  z-index: -1;
+}
+
+.btn:hover {
+  color: white;
+  border-color: var(--c-accent);
+}
+
+.btn:hover::before { transform: translateY(0); }
+
+.btn-primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: white;
+}
+.btn-primary::before { background: var(--c-accent-2); }
+.btn-primary:hover { border-color: var(--c-accent-2); }
+
+.btn .arrow {
+  display: inline-block;
+  transition: transform var(--d-2) var(--ease);
+}
+.btn:hover .arrow { transform: translateX(3px); }
+
+/* ---------- horizontal rule ---------- */
+hr {
+  border: 0;
+  border-top: 1px solid var(--c-border);
+  margin: var(--s-7) 0;
+}
+
+/* ---------- selection ---------- */
+::selection {
+  background: var(--c-accent);
+  color: white;
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

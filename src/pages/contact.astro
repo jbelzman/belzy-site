@@ -1,0 +1,262 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Contact · Josh Belzman"
+  description="The fastest way to reach Josh Belzman — email, LinkedIn, or the form below."
+>
+  <div class="page contact-page">
+    <header class="contact-header">
+      <p class="eyebrow">Contact · Let&rsquo;s talk</p>
+      <h1>Got a measurement problem<br />worth solving?</h1>
+      <p class="prose contact-intro">
+        The fastest way to reach me is email. I read everything; I reply to
+        most things within a few business days. Open to senior analytics and AI
+        enablement roles &mdash; full-time, contract, or advisory &mdash;
+        on-site or hybrid in Savannah, remote across the U.S.
+      </p>
+    </header>
+
+    <div class="contact-grid">
+      <section class="contact-form-wrap">
+        <p class="eyebrow form-label">Send a message</p>
+
+        <form
+          name="contact"
+          method="POST"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          action="/contact?ok=1"
+          class="contact-form"
+        >
+          <input type="hidden" name="form-name" value="contact" />
+          <p class="hp">
+            <label>Don&rsquo;t fill this out: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" required autocomplete="name" />
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email" />
+          </div>
+
+          <div class="field">
+            <label for="subject">Subject</label>
+            <input id="subject" name="subject" type="text" placeholder="What's this about?" />
+          </div>
+
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="6" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            Send message <span class="arrow">→</span>
+          </button>
+        </form>
+      </section>
+
+      <aside class="contact-side">
+        <p class="eyebrow">Direct</p>
+        <ul class="direct-list">
+          <li>
+            <span class="mono dl-label">Email</span>
+            <a href="mailto:josh@belzy.net" class="dl-value">josh@belzy.net</a>
+          </li>
+          <li>
+            <span class="mono dl-label">LinkedIn</span>
+            <a href="https://www.linkedin.com/in/jbelzman" rel="noopener" class="dl-value">jbelzman</a>
+          </li>
+          <li>
+            <span class="mono dl-label">Resume</span>
+            <a href="/resume" class="dl-value">View &amp; download</a>
+          </li>
+          <li>
+            <span class="mono dl-label">Location</span>
+            <span class="dl-value">Savannah, GA</span>
+          </li>
+        </ul>
+
+        <p class="eyebrow availability-label">Availability</p>
+        <p class="availability">
+          <span class="status-dot" aria-hidden="true"></span>
+          Currently in role at Publicis Media. Open to conversations about
+          senior analytics, measurement, and AI enablement roles &mdash;
+          full-time or advisory.
+        </p>
+      </aside>
+    </div>
+
+    <div id="thanks" class="thanks" role="status" aria-live="polite" hidden>
+      <p class="eyebrow">Sent</p>
+      <h2>Thanks &mdash; got it.</h2>
+      <p class="prose">
+        I&rsquo;ll be in touch within a few business days. If it&rsquo;s
+        time-sensitive, email <a href="mailto:josh@belzy.net">josh@belzy.net</a>
+        directly.
+      </p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .contact-page { padding-top: var(--s-8); }
+
+  .contact-header { margin-bottom: var(--s-8); }
+  .contact-header h1 {
+    margin: var(--s-3) 0 var(--s-5);
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+    max-width: 18ch;
+  }
+
+  .contact-intro {
+    font-size: 1.0625rem;
+    color: var(--c-text-mute);
+    line-height: 1.65;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--s-8);
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .contact-grid { grid-template-columns: 1fr; gap: var(--s-7); }
+  }
+
+  /* ---------- form ---------- */
+  .contact-form-wrap {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 4px;
+    padding: var(--s-6);
+  }
+
+  .form-label { margin-bottom: var(--s-5); }
+
+  .contact-form { display: grid; gap: var(--s-5); }
+
+  .hp { position: absolute; left: -9999px; }
+
+  .field { display: grid; gap: var(--s-2); }
+
+  .field label {
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-mute);
+  }
+
+  .field input,
+  .field textarea {
+    background: var(--c-bg-soft);
+    border: 1px solid var(--c-border);
+    border-radius: 2px;
+    padding: var(--s-3) var(--s-4);
+    color: var(--c-text);
+    font-family: var(--f-sans);
+    font-size: 0.9375rem;
+    transition: border-color var(--d-1) var(--ease);
+    width: 100%;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--c-accent);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--c-text-dim);
+  }
+
+  /* ---------- side ---------- */
+  .contact-side {
+    padding-top: var(--s-3);
+  }
+
+  .direct-list {
+    list-style: none;
+    padding: 0;
+    margin: var(--s-3) 0 var(--s-7);
+    border-top: 1px solid var(--c-border);
+  }
+
+  .direct-list li {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: var(--s-4);
+    padding: var(--s-4) 0;
+    border-bottom: 1px solid var(--c-border);
+    align-items: baseline;
+  }
+
+  .dl-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--c-text-dim);
+  }
+
+  .dl-value {
+    font-size: 0.9375rem;
+    color: var(--c-text);
+  }
+
+  a.dl-value:hover { color: var(--c-accent-2); }
+
+  .availability-label { margin-bottom: var(--s-3); }
+
+  .availability {
+    color: var(--c-text-mute);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--c-success);
+    border-radius: 50%;
+    margin-right: var(--s-2);
+  }
+
+  /* thanks message */
+  .thanks {
+    margin-top: var(--s-7);
+    padding: var(--s-6);
+    background: var(--c-surface);
+    border: 1px solid var(--c-accent);
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  .thanks h2 { margin: var(--s-3) 0 var(--s-3); }
+</style>
+
+<script>
+  // Show thanks message after redirect with ?ok=1
+  if (new URLSearchParams(window.location.search).get('ok') === '1') {
+    const thanks = document.getElementById('thanks');
+    if (thanks) {
+      thanks.hidden = false;
+      thanks.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+</script>

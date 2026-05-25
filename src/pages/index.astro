@@ -1,0 +1,490 @@
+---
+import Base from '../layouts/Base.astro';
+import WorkCard from '../components/WorkCard.astro';
+import { getCollection } from 'astro:content';
+
+const work = (await getCollection('work', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base>
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="page hero-inner">
+      <div class="hero-meta">
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Director of Analytics · Publicis Media · Savannah, GA</p>
+      </div>
+
+      <h1 class="hero-title">
+        Analytics &amp;<br />
+        <span class="hero-em">AI enablement</span><br />
+        leader.
+      </h1>
+
+      <p class="hero-sub prose">
+        I build measurement frameworks, dashboards, and AI-enabled workflows
+        for <span class="mono num">$300M+</span> media programs &mdash; and the
+        teams that run them. Fifteen years shipping product across MSNBC, CNN,
+        Fred Hutch, Eli Lilly, and Dick&rsquo;s Sporting Goods.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="/work" class="btn btn-primary">
+          See the work <span class="arrow">→</span>
+        </a>
+        <a href="/contact" class="btn">
+          Let&rsquo;s talk
+        </a>
+      </div>
+
+      <ul class="hero-credentials mono" aria-label="Career timeline">
+        <li>15+ yrs</li>
+        <li>MSNBC</li>
+        <li>CNN</li>
+        <li>Fred Hutch</li>
+        <li>Courier</li>
+        <li>Eli Lilly</li>
+        <li>Dick&rsquo;s</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="section about">
+    <div class="page about-grid">
+      <div>
+        <p class="eyebrow">About · 01</p>
+        <h2 class="about-heading">Ships and scales.<br/>With AI as a force multiplier.</h2>
+      </div>
+      <div class="about-body prose">
+        <p>
+          I&rsquo;m a Director of Analytics at Publicis Media, owning the
+          client-facing Power BI reporting product for Dick&rsquo;s Sporting
+          Goods&rsquo; <span class="mono">$300M+</span> media program &mdash;
+          discovery through delivery, with a four-person team and a roadmap.
+        </p>
+        <p>
+          Before that, fifteen years across MSNBC, CNN, Fred Hutch, the City of
+          Seattle, Courier Newsroom, and Eli Lilly. The throughline: turning
+          messy specs into MVPs people actually use, and treating LLMs as part
+          of how the team ships &mdash; not as a feature on top.
+        </p>
+        <p>
+          I started in journalism. I still think in stories and ledes. The data
+          just has to back them up.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURED WORK ============ -->
+  <section class="section">
+    <div class="page">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Selected Work · 02</p>
+          <h2>Things I&rsquo;ve shipped.</h2>
+        </div>
+        <a href="/work" class="head-link mono">All work →</a>
+      </div>
+
+      <div class="work-grid">
+        {work.map((entry, i) => (
+          <WorkCard
+            href={`/work/${entry.id}`}
+            client={entry.data.client}
+            role={entry.data.role}
+            years={entry.data.years}
+            summary={entry.data.summary}
+            tools={entry.data.tools}
+            heroImage={entry.data.heroImage}
+            heroAlt={entry.data.heroAlt}
+            index={i + 1}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STACK ============ -->
+  <section class="section stack-section">
+    <div class="page stack-grid">
+      <div class="stack-head">
+        <p class="eyebrow">Stack · 03</p>
+        <h2>What I work in.</h2>
+        <p class="stack-note prose">
+          Enough fluency in each layer to speak the language of engineering and
+          evolve the work &mdash; not just consume it.
+        </p>
+      </div>
+      <dl class="stack-list">
+        <div class="stack-row">
+          <dt class="mono">Dashboards &amp; BI</dt>
+          <dd>Power BI · Tableau · Looker / Data Studio · DOMO · DAX</dd>
+        </div>
+        <div class="stack-row">
+          <dt class="mono">Data &amp; SQL</dt>
+          <dd>BigQuery · Redshift · Snowflake · SQL · Python · Databricks</dd>
+        </div>
+        <div class="stack-row">
+          <dt class="mono">AI Enablement</dt>
+          <dd>Claude · OpenAI · Microsoft Copilot · Gemini · Agentic workflow design</dd>
+        </div>
+        <div class="stack-row">
+          <dt class="mono">Product &amp; Delivery</dt>
+          <dd>Discovery · Requirements · MVP scoping · Agile · Jira · Confluence</dd>
+        </div>
+        <div class="stack-row">
+          <dt class="mono">Measurement</dt>
+          <dd>MMM · IAS / DoubleVerify · DISQO · IQVIA · Incrementality testing</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ PULL QUOTE ============ -->
+  <section class="section quote-section">
+    <div class="page">
+      <figure class="quote">
+        <p class="serif quote-text">
+          &ldquo;Josh translates messy, multi-source data into the one view that
+          actually answers the business question &mdash; and gets the team using
+          it the way it was designed.&rdquo;
+        </p>
+        <figcaption class="eyebrow">
+          &mdash; Stakeholder feedback, multi-brand reporting program
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ CONTACT CTA ============ -->
+  <section class="section cta-section">
+    <div class="page cta-inner">
+      <div>
+        <p class="eyebrow">What&rsquo;s next</p>
+        <h2 class="cta-heading">
+          Open to senior analytics<br />
+          &amp; AI enablement roles.
+        </h2>
+        <p class="prose cta-sub">
+          Full-time, contract, or advisory. On-site or hybrid in Savannah,
+          remote across the U.S.
+        </p>
+      </div>
+      <div class="cta-actions">
+        <a href="/contact" class="btn btn-primary">Let&rsquo;s talk <span class="arrow">→</span></a>
+        <a href="/resume" class="btn">Resume</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative;
+    padding-top: var(--s-9);
+    padding-bottom: var(--s-9);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(30, 91, 216, 0.18), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -5%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(230, 57, 70, 0.06), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-meta { margin-bottom: var(--s-6); }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--c-success);
+    border-radius: 50%;
+    margin-right: var(--s-2);
+    vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(63, 185, 132, 0.6); }
+    50%      { box-shadow: 0 0 0 6px rgba(63, 185, 132, 0); }
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    margin-bottom: var(--s-6);
+    max-width: 12ch;
+  }
+
+  .hero-em {
+    background: linear-gradient(90deg, var(--c-accent), var(--c-accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    position: relative;
+    display: inline-block;
+  }
+
+  .hero-em::after {
+    content: '';
+    position: absolute;
+    left: -4px;
+    right: -4px;
+    bottom: 4px;
+    height: 4px;
+    background: var(--c-red);
+    opacity: 0.85;
+    transform: rotate(-1deg) scaleX(0.96);
+    z-index: -1;
+    border-radius: 1px;
+  }
+
+  .hero-sub {
+    font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+    color: var(--c-text-mute);
+    line-height: 1.55;
+    margin-bottom: var(--s-7);
+    max-width: 56ch;
+  }
+
+  .hero-sub .num {
+    color: var(--c-text);
+    font-weight: 600;
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+    margin-bottom: var(--s-8);
+  }
+
+  .hero-credentials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    list-style: none;
+    padding: var(--s-4) 0 0;
+    margin: 0;
+    border-top: 1px solid var(--c-border);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-dim);
+  }
+
+  .hero-credentials li {
+    padding: var(--s-3) var(--s-4) var(--s-3) 0;
+    border-right: 1px solid var(--c-border);
+    margin-right: var(--s-4);
+  }
+
+  .hero-credentials li:last-child {
+    border-right: 0;
+    margin-right: 0;
+  }
+
+  /* ---------- about ---------- */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: var(--s-8);
+    align-items: start;
+  }
+
+  .about-heading {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    margin-top: var(--s-3);
+  }
+
+  .about-body p {
+    font-size: 1.0625rem;
+    color: var(--c-text);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 768px) {
+    .about-grid { grid-template-columns: 1fr; gap: var(--s-5); }
+  }
+
+  /* ---------- section heads ---------- */
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-bottom: var(--s-7);
+    gap: var(--s-4);
+  }
+
+  .section-head h2 {
+    margin-top: var(--s-3);
+  }
+
+  .head-link {
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-mute);
+    padding-bottom: var(--s-2);
+  }
+
+  .head-link:hover { color: var(--c-accent-2); }
+
+  /* ---------- work grid ---------- */
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--s-5);
+  }
+
+  /* ---------- stack ---------- */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: var(--s-8);
+    align-items: start;
+  }
+
+  .stack-note {
+    color: var(--c-text-mute);
+    margin-top: var(--s-3);
+    font-size: 1rem;
+  }
+
+  .stack-head h2 { margin-top: var(--s-3); }
+
+  .stack-list {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--c-border);
+  }
+
+  .stack-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: var(--s-5);
+    padding: var(--s-5) 0;
+    border-bottom: 1px solid var(--c-border);
+    align-items: baseline;
+  }
+
+  .stack-row dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--c-text-mute);
+    margin: 0;
+  }
+
+  .stack-row dd {
+    margin: 0;
+    color: var(--c-text);
+    font-size: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .stack-grid { grid-template-columns: 1fr; gap: var(--s-5); }
+    .stack-row { grid-template-columns: 1fr; gap: var(--s-2); padding: var(--s-4) 0; }
+  }
+
+  /* ---------- quote ---------- */
+  .quote-section {
+    padding: var(--s-8) 0;
+  }
+
+  .quote {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 0 var(--s-5);
+  }
+
+  .quote-text {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    line-height: 1.35;
+    color: var(--c-text);
+    margin-bottom: var(--s-5);
+    position: relative;
+  }
+
+  .quote-text::before {
+    content: '"';
+    position: absolute;
+    left: -0.4em;
+    top: -0.3em;
+    font-size: 4em;
+    color: var(--c-accent);
+    opacity: 0.18;
+    line-height: 1;
+    font-family: var(--f-serif);
+  }
+
+  /* ---------- cta ---------- */
+  .cta-section {
+    background:
+      linear-gradient(180deg, transparent, rgba(30, 91, 216, 0.05));
+    border-top: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .cta-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--s-6);
+    align-items: center;
+  }
+
+  .cta-heading {
+    margin-top: var(--s-3);
+    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  }
+
+  .cta-sub {
+    margin-top: var(--s-4);
+    color: var(--c-text-mute);
+    font-size: 1.0625rem;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 768px) {
+    .cta-inner { grid-template-columns: 1fr; }
+  }
+</style>

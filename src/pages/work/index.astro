@@ -1,0 +1,108 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkCard from '../../components/WorkCard.astro';
+import { getCollection } from 'astro:content';
+
+const work = (await getCollection('work', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base
+  title="Work · Josh Belzman"
+  description="Selected analytics, BI, and AI enablement case studies — Dick's Sporting Goods, Eli Lilly, Courier Newsroom."
+>
+  <div class="page work-index">
+    <header class="work-header">
+      <p class="eyebrow">Portfolio</p>
+      <h1>Selected work.</h1>
+      <p class="prose work-intro">
+        Three programs from the last six years. Each one shipped a measurement
+        product end-to-end &mdash; discovery, requirements, delivery, and
+        adoption. Older work spans MSNBC, CNN, Fred Hutch, and the City of
+        Seattle.
+      </p>
+      <div class="work-actions">
+        <a href="/Josh_Belzman_Portfolio.pdf" class="btn" download>
+          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+            <path d="M12 3 V15 M6 11 L12 17 L18 11 M4 21 H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
+          </svg>
+          Full portfolio (PDF)
+        </a>
+        <a href="/resume" class="btn">Resume</a>
+      </div>
+    </header>
+
+    <div class="work-grid">
+      {work.map((entry, i) => (
+        <WorkCard
+          href={`/work/${entry.id}`}
+          client={entry.data.client}
+          role={entry.data.role}
+          years={entry.data.years}
+          summary={entry.data.summary}
+          tools={entry.data.tools}
+          heroImage={entry.data.heroImage}
+          heroAlt={entry.data.heroAlt}
+          index={i + 1}
+        />
+      ))}
+    </div>
+
+    <aside class="work-aside">
+      <p class="eyebrow">More on request</p>
+      <p class="prose">
+        Earlier work &mdash; CNN&rsquo;s 500+ DOMO dashboards, Fred Hutch
+        digital engagement, City of Seattle Mayor&rsquo;s Office, NBC News
+        Digital editorial systems &mdash; is documented in the full portfolio
+        PDF or available to discuss directly.
+        <a href="/contact">Get in touch →</a>
+      </p>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .work-index {
+    padding-top: var(--s-8);
+  }
+
+  .work-header {
+    margin-bottom: var(--s-8);
+    max-width: 800px;
+  }
+
+  .work-header h1 {
+    margin-top: var(--s-3);
+    margin-bottom: var(--s-5);
+  }
+
+  .work-intro {
+    font-size: 1.125rem;
+    color: var(--c-text-mute);
+    line-height: 1.6;
+    margin-bottom: var(--s-6);
+  }
+
+  .work-actions {
+    display: flex;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+  }
+
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: var(--s-5);
+    margin-bottom: var(--s-8);
+  }
+
+  .work-aside {
+    border-top: 1px solid var(--c-border);
+    padding-top: var(--s-6);
+    margin-top: var(--s-6);
+  }
+
+  .work-aside .eyebrow { margin-bottom: var(--s-3); }
+  .work-aside .prose { color: var(--c-text-mute); }
+  .work-aside a { color: var(--c-accent-2); }
+</style>

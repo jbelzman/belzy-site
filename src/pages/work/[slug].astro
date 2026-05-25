@@ -1,0 +1,303 @@
+---
+import Base from '../../layouts/Base.astro';
+import Lightbox from '../../components/Lightbox.astro';
+import LightboxImage from '../../components/LightboxImage.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('work', ({ data }) => !data.draft);
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const all = (await getCollection('work', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order);
+const idx = all.findIndex((e) => e.id === entry.id);
+const prev = idx > 0 ? all[idx - 1] : null;
+const next = idx < all.length - 1 ? all[idx + 1] : null;
+---
+
+<Base
+  title={`${entry.data.client} · Josh Belzman`}
+  description={entry.data.summary}
+  pageType="article"
+>
+  <article class="case">
+    <div class="page case-header">
+      <p class="eyebrow"><a href="/work">← All work</a></p>
+      <h1 class="case-title">{entry.data.title}</h1>
+
+      <dl class="case-meta">
+        <div>
+          <dt class="eyebrow">Client</dt>
+          <dd>{entry.data.client}</dd>
+        </div>
+        <div>
+          <dt class="eyebrow">Role</dt>
+          <dd>{entry.data.role}</dd>
+        </div>
+        <div>
+          <dt class="eyebrow">Years</dt>
+          <dd class="mono">{entry.data.years}</dd>
+        </div>
+        <div class="case-meta-tools">
+          <dt class="eyebrow">Stack</dt>
+          <dd>
+            <ul class="tool-list mono">
+              {entry.data.tools.map((t) => <li>{t}</li>)}
+            </ul>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="page case-hero-wrap">
+      <LightboxImage
+        src={entry.data.heroImage}
+        alt={entry.data.heroAlt}
+        caption={entry.data.heroAlt}
+      />
+    </div>
+
+    <div class="page case-body">
+      <div class="case-prose prose">
+        <Content />
+      </div>
+    </div>
+
+    {entry.data.images && entry.data.images.length > 1 && (
+      <div class="page case-gallery">
+        <p class="eyebrow gallery-eyebrow">Dashboard views · click to expand</p>
+        <div class="gallery-grid">
+          {entry.data.images.slice(1).map((img) => (
+            <figure class="gallery-figure">
+              <LightboxImage
+                src={img.src}
+                alt={img.alt}
+                caption={img.caption || img.alt}
+              />
+              {img.caption && (
+                <figcaption class="mono gallery-caption">{img.caption}</figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <nav class="page case-nav" aria-label="Other case studies">
+      {prev ? (
+        <a href={`/work/${prev.id}`} class="case-nav-link prev">
+          <span class="eyebrow">← Previous</span>
+          <span class="case-nav-title">{prev.data.client}</span>
+        </a>
+      ) : <span></span>}
+      {next ? (
+        <a href={`/work/${next.id}`} class="case-nav-link next">
+          <span class="eyebrow">Next →</span>
+          <span class="case-nav-title">{next.data.client}</span>
+        </a>
+      ) : <span></span>}
+    </nav>
+  </article>
+
+  <Lightbox />
+</Base>
+
+<style>
+  .case-header {
+    padding-top: var(--s-7);
+    padding-bottom: var(--s-7);
+  }
+
+  .case-header .eyebrow a {
+    color: var(--c-text-mute);
+    font-family: var(--f-mono);
+  }
+  .case-header .eyebrow a:hover { color: var(--c-accent-2); }
+
+  .case-title {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    margin: var(--s-5) 0 var(--s-7);
+    max-width: 20ch;
+    letter-spacing: -0.03em;
+  }
+
+  .case-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--s-5);
+    margin: 0;
+    border-top: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--c-border);
+    padding: var(--s-5) 0;
+  }
+
+  .case-meta div { margin: 0; }
+  .case-meta dt { margin-bottom: var(--s-2); }
+  .case-meta dd {
+    margin: 0;
+    color: var(--c-text);
+    font-size: 0.9375rem;
+  }
+
+  .case-meta-tools { grid-column: span 1; }
+
+  .tool-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+
+  .tool-list li {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-mute);
+    border: 1px solid var(--c-border);
+    padding: 0.2rem 0.45rem;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 768px) {
+    .case-meta { grid-template-columns: 1fr 1fr; gap: var(--s-4); }
+    .case-meta-tools { grid-column: span 2; }
+  }
+
+  .case-hero-wrap {
+    padding-bottom: var(--s-7);
+  }
+
+  .case-body { padding-bottom: var(--s-7); }
+
+  .case-prose {
+    max-width: var(--w-prose);
+    margin: 0 auto;
+    color: var(--c-text);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  .case-prose :global(h2) {
+    margin-top: var(--s-7);
+    margin-bottom: var(--s-4);
+    font-size: 1.5rem;
+    padding-bottom: var(--s-3);
+    border-bottom: 1px solid var(--c-border);
+    color: var(--c-accent-2);
+    letter-spacing: -0.01em;
+  }
+
+  .case-prose :global(h2:first-child) { margin-top: 0; }
+
+  .case-prose :global(p) {
+    margin-bottom: var(--s-4);
+    color: var(--c-text);
+  }
+
+  .case-prose :global(ul) {
+    margin: 0 0 var(--s-5);
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .case-prose :global(li) {
+    position: relative;
+    padding-left: var(--s-6);
+    margin-bottom: var(--s-3);
+    color: var(--c-text);
+  }
+
+  .case-prose :global(li::before) {
+    content: '→';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--c-accent);
+    font-family: var(--f-mono);
+    font-weight: 600;
+  }
+
+  .case-prose :global(strong) {
+    color: var(--c-text);
+    font-weight: 600;
+  }
+
+  .case-prose :global(code) {
+    font-family: var(--f-mono);
+    background: var(--c-surface);
+    padding: 0.1em 0.35em;
+    border-radius: 2px;
+    font-size: 0.875em;
+    color: var(--c-accent-2);
+  }
+
+  /* ---------- gallery ---------- */
+  .case-gallery {
+    padding: var(--s-7) 0;
+    border-top: 1px solid var(--c-border);
+  }
+
+  .gallery-eyebrow {
+    text-align: center;
+    margin-bottom: var(--s-6);
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: var(--s-5);
+  }
+
+  .gallery-figure {
+    margin: 0;
+  }
+
+  .gallery-caption {
+    margin-top: var(--s-3);
+    font-size: 0.8125rem;
+    color: var(--c-text-mute);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 640px) {
+    .gallery-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- nav ---------- */
+  .case-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-5);
+    padding: var(--s-7) var(--s-5);
+    margin: var(--s-7) auto 0;
+    border-top: 1px solid var(--c-border);
+  }
+
+  .case-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    padding: var(--s-5);
+    border: 1px solid var(--c-border);
+    border-radius: 4px;
+    transition: border-color var(--d-2) var(--ease);
+  }
+
+  .case-nav-link:hover { border-color: var(--c-accent); }
+  .case-nav-link.next { text-align: right; align-items: flex-end; }
+
+  .case-nav-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--c-text);
+  }
+</style>

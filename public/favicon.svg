@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1E5BD8"/>
+  <path d="M 4 42 Q 32 22 60 20" stroke="#E63946" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <text x="32" y="38" text-anchor="middle" font-family="Arial Black, Inter, sans-serif" font-weight="900" font-size="16" fill="white" letter-spacing="0.5">JOSH</text>
+</svg>

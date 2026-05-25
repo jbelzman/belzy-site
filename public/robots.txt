@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://belzy.net/sitemap-index.xml

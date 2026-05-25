@@ -20,11 +20,11 @@ order: 3
 
 ## The brief
 
-Courier ran a network of eight owned media properties (Up North News, Keystone, Gander, Dogwood, Floricuas, Courier, Copper Courier, Cardinal &amp; Pine, Americano). Every property had its own platforms, content cadence, and audience strategy — but no unified view of engagement, growth, or pacing. And no budget for a commercial BI stack.
+Courier ran a network of eight owned media properties (Up North News, Keystone, Gander, Dogwood, Floricuas, Courier, Copper Courier, Cardinal &amp; Pine, Americano). Every property had its own voice, content cadence, and audience strategy — but no unified view of engagement, growth, or pacing. And little budget for a commercial BI stack.
 
 ## The approach
 
-Designed, built, and flew the plane. End-to-end newsroom analytics stack on Google Cloud Platform.
+Designed, built, and flew the plane. Engineered an end-to-end newsroom analytics stack on Google Cloud Platform.
 
 Key moves:
 

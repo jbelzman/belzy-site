@@ -11,21 +11,23 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
   <!-- ============ HERO ============ -->
   <section class="hero">
     <div class="page hero-inner">
-      <div class="hero-meta">
-        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Director of Analytics · Publicis Media · Savannah, GA</p>
-      </div>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <div class="hero-meta">
+            <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Director of Analytics · Publicis Media · Savannah, GA</p>
+          </div>
 
-      <h1 class="hero-title">
+          <h2 class="hero-title">
         Analytics &amp;<br />
         <span class="hero-em">AI enablement</span><br />
         leader.
-      </h1>
+      </h2>
 
       <p class="hero-sub prose">
         I build measurement frameworks, dashboards, and AI-enabled workflows
         for <span class="mono num">$300M+</span> media programs &mdash; and the
-        teams that run them. Fifteen years shipping product across MSNBC, CNN,
-        Fred Hutch, Eli Lilly, and Dick&rsquo;s Sporting Goods.
+        teams that run them. Fifteen years driving insights and shipping tools across NBC News, MSNBC, CNN,
+        Fred Hutch, The City of Seattle, and Publicis Media clients Eli Lilly and Dick&rsquo;s Sporting Goods.
       </p>
 
       <div class="hero-ctas">
@@ -40,12 +42,21 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
       <ul class="hero-credentials mono" aria-label="Career timeline">
         <li>15+ yrs</li>
         <li>MSNBC</li>
+        <li>NBC News</li>
         <li>CNN</li>
-        <li>Fred Hutch</li>
-        <li>Courier</li>
+        <li>Seattle Mayor&rsquo;s Office</li>
+        <li>Publicis Media</li>
         <li>Eli Lilly</li>
-        <li>Dick&rsquo;s</li>
+        <li>Dick&rsquo;s Sporting Goods</li>
+        <li>Fred Hutch Cancer Research Center</li>
+        <li>Courier Newsroom</li>
       </ul>
+        </div>
+
+        <div class="hero-portrait">
+          <img src="/images/josh-belzman_portrait.jpg" alt="Josh Belzman" width="225" height="300" />
+        </div>
+      </div>
     </div>
   </section>
 
@@ -54,24 +65,24 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
     <div class="page about-grid">
       <div>
         <p class="eyebrow">About · 01</p>
-        <h2 class="about-heading">Ships and scales.<br/>With AI as a force multiplier.</h2>
+        <h2 class="about-heading">Solutions that scale.<br/>AI as a force multiplier - not a gimmick.</h2>
       </div>
       <div class="about-body prose">
         <p>
-          I&rsquo;m a Director of Analytics at Publicis Media, owning the
-          client-facing Power BI reporting product for Dick&rsquo;s Sporting
+          I&rsquo;m a Director of Analytics at Publicis Media, owning
+          client-facing reporting and measurement strategy for Dick&rsquo;s Sporting
           Goods&rsquo; <span class="mono">$300M+</span> media program &mdash;
-          discovery through delivery, with a four-person team and a roadmap.
+          overseeing data discovery through insight delivery, leading a four-person team and a roadmap.
         </p>
         <p>
-          Before that, fifteen years across MSNBC, CNN, Fred Hutch, the City of
+          Before that, fifteen years across MSNBC, NBC News, CNN, Fred Hutch, the City of
           Seattle, Courier Newsroom, and Eli Lilly. The throughline: turning
-          messy specs into MVPs people actually use, and treating LLMs as part
-          of how the team ships &mdash; not as a feature on top.
+          messy specs into MVPs people actually use, and treating automation and AI as part
+          of how the team grows ad ships &mdash; not as a cherry on top.
         </p>
         <p>
-          I started in journalism. I still think in stories and ledes. The data
-          just has to back them up.
+          I started in journalism. I still think in stories that land and impact that sticks. The data
+          changes but the mission to bring clarity is the same.
         </p>
       </div>
     </div>
@@ -83,7 +94,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
       <div class="section-head">
         <div>
           <p class="eyebrow">Selected Work · 02</p>
-          <h2>Things I&rsquo;ve shipped.</h2>
+          <h1>Things I&rsquo;ve shipped.</h1>
         </div>
         <a href="/work" class="head-link mono">All work →</a>
       </div>
@@ -128,7 +139,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
         </div>
         <div class="stack-row">
           <dt class="mono">AI Enablement</dt>
-          <dd>Claude · OpenAI · Microsoft Copilot · Gemini · Agentic workflow design</dd>
+          <dd>Claude · OpenAI · Copilot · Gemini · Agentic workflow design</dd>
         </div>
         <div class="stack-row">
           <dt class="mono">Product &amp; Delivery</dt>
@@ -136,7 +147,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
         </div>
         <div class="stack-row">
           <dt class="mono">Measurement</dt>
-          <dd>MMM · IAS / DoubleVerify · DISQO · IQVIA · Incrementality testing</dd>
+          <dd>Platform &amp; custom KPIs · Brand Lift &amp; MMM · IAS / DoubleVerify · DISQO · IQVIA · Incrementality testing</dd>
         </div>
       </dl>
     </div>
@@ -147,12 +158,14 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
     <div class="page">
       <figure class="quote">
         <p class="serif quote-text">
-          &ldquo;Josh translates messy, multi-source data into the one view that
-          actually answers the business question &mdash; and gets the team using
-          it the way it was designed.&rdquo;
+          &ldquo;In the ever-evolving world of media and technology, 
+          Josh is a rare talent. He appreciates the often messy art of 
+          storytelling while embracing the science of data-driven decision-making. 
+          Above all, it&rsquo;s Josh&rsquo;s great attitude that made him a real asset
+           on some of our most complex challenges.&rdquo;
         </p>
         <figcaption class="eyebrow">
-          &mdash; Stakeholder feedback, multi-brand reporting program
+          &mdash; Ryan Osborn, VP Transformation & Product, NBC News Digital
         </figcaption>
       </figure>
     </div>
@@ -222,6 +235,55 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
     z-index: 1;
   }
 
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--s-8);
+    align-items: center;
+  }
+
+  .hero-portrait {
+    position: relative;
+    max-width: 280px;
+    justify-self: end;
+  }
+
+  .hero-portrait img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--c-border-bright);
+    filter: grayscale(15%) contrast(1.05);
+    transition: filter var(--d-3) var(--ease);
+  }
+
+  .hero-portrait:hover img {
+    filter: grayscale(0%) contrast(1);
+  }
+
+  .hero-portrait::before {
+    content: '';
+    position: absolute;
+    inset: 12px -12px -12px 12px;
+    border: 1px solid var(--c-accent);
+    border-radius: 4px;
+    z-index: -1;
+  }
+
+  @media (max-width: 768px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: var(--s-6);
+    }
+    .hero-portrait {
+      order: -1;
+      max-width: 240px;
+      justify-self: start;
+    }
+  }
+
   .hero-meta { margin-bottom: var(--s-6); }
 
   .status-dot {
@@ -241,7 +303,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
   }
 
   .hero-title {
-    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-size: clamp(2.5rem, 6vw, 5rem);
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 0.95;

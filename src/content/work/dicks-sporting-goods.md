@@ -3,7 +3,7 @@ title: "Dick's Sporting Goods Campaign Performance Dashboard"
 client: "Dick's Sporting Goods"
 role: "Director of Analytics · Publicis Media"
 years: "2024 — Present"
-tools: ["Tableau", "Redshift", "Funnel.io", "DSPs & Social Platform APIs"]
+tools: ["Tableau", "Redshift", "Ad Platform APIs", "Taxonomy"]
 summary: "Client-facing Tableau reporting product with real-time performance data supporting optimizations for a $300M+ media program — discovery, requirements, engineering partnership, and roadmap."
 outcome: "Replaced platform-hopping with a unified insight engine. Added 1–2 FTE of capacity by integrating AI tools into ETL, spec drafting, and prototyping."
 heroImage: "/images/work/dicks-hero.png"

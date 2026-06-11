@@ -1,6 +1,6 @@
 ---
 title: "Local Data Masking Tool"
-client: "Internal / Open Use"
+client: "Data Masking Tool"
 role: "Product Designer & Developer"
 years: "2025 — 2026"
 tools: ["Python", "Claude", "HMAC-SHA256", "Tkinter", "pandas", "openpyxl"]
@@ -32,7 +32,7 @@ order: 4
 
 ## The problem
 
-Analysts working with client media data face a familiar bind: the most useful AI-assisted analysis requires sharing actual data with a model, but client contracts and basic data hygiene say you shouldn't paste campaign names, placement IDs, or partner identifiers into a third-party API.
+Analysts working with client media data face a familiar bind: the most useful AI-assisted analysis requires sharing actual data with a model, but client contracts and basic data hygiene say you shouldn't paste campaign names, placement IDs, or other potentially sensitive identifiers into a third-party API.
 
 The usual workarounds — anonymizing by hand before sharing, using only aggregate totals, or just not using AI — each sacrifice something. Manual anonymization is slow and error-prone. Sharing only aggregates strips the structural detail that makes AI analysis useful. Skipping AI entirely leaves real capacity on the table.
 

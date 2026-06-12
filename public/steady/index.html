@@ -25,7 +25,7 @@ const STORAGE_KEY = "steady-tracker-v1";
 
 const PILLARS = {
   food: { label: "Food" },
-  body: { label: "Body" },
+  body: { label: "Mind & Body" },
   boundaries: { label: "Boundaries" },
   people: { label: "People" },
 };
@@ -34,6 +34,7 @@ const DEFAULT_HABITS = [
   { id: "b1", label: "Moved for 20 minutes", pillar: "body" },
   { id: "b2", label: "Worked out (more than a walk)", pillar: "body" },
   { id: "b3", label: "Breathwork", pillar: "body" },
+  { id: "b4", label: "Journal", pillar: "body" },
   { id: "n1", label: "Hard stop on work", pillar: "boundaries" },
   { id: "n2", label: "Screens down before bed", pillar: "boundaries" },
   { id: "n3", label: "One thing just for me", pillar: "boundaries" },
@@ -46,10 +47,15 @@ const MEALS = ["Breakfast", "Lunch", "Dinner"];
 /* migrate data saved under the original pillar names / default list */
 const OLD_PILLAR_MAP = { eating: "food", fitness: "body", behavior: "boundaries" };
 const migrateHabits = (stored) => {
-  const oldDefaultIds = ["h1", "h2", "h3", "h4", "h5"];
-  const isOldDefaults =
-    stored.length === 5 && stored.every((h) => oldDefaultIds.includes(h.id));
-  if (isOldDefaults) return DEFAULT_HABITS;
+  const v1Ids = ["h1", "h2", "h3", "h4", "h5"];
+  const isV1Defaults =
+    stored.length === 5 && stored.every((h) => v1Ids.includes(h.id));
+  if (isV1Defaults) return DEFAULT_HABITS;
+  /* untouched v2 defaults (pre-Journal): upgrade to current defaults */
+  const v2Ids = ["b1", "b2", "b3", "n1", "n2", "n3", "p1", "p2"];
+  const isV2Defaults =
+    stored.length === 8 && stored.every((h) => v2Ids.includes(h.id));
+  if (isV2Defaults) return DEFAULT_HABITS;
   return stored.map((h) => ({ ...h, pillar: OLD_PILLAR_MAP[h.pillar] || h.pillar }));
 };
 
@@ -111,6 +117,255 @@ const computeStreak = (days) => {
   }
   return streak;
 };
+
+/* --------------------------- report export --------------------------- */
+
+const RC = {
+  bg: "#EDEFE8", card: "#FAFBF7", ink: "#22332C", moss: "#51695D",
+  soft: "#8C9C90", line: "#D9DED2", gold: "#BD8328",
+};
+
+const fmtShort = (ds) =>
+  new Date(ds + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+const truncateText = (ctx, text, maxW) => {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + "\u2026").width > maxW) t = t.slice(0, -1);
+  return t + "\u2026";
+};
+
+const roundRectPath = (ctx, x, y, w, h, r) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+};
+
+async function generateReportPNG(days, habits, nDays) {
+  const range = lastNDays(nDays);
+  const start = range[0];
+  const end = range[range.length - 1];
+
+  try {
+    await Promise.all([
+      document.fonts.load("600 46px Fraunces"),
+      document.fonts.load("600 40px Fraunces"),
+      document.fonts.load("500 16px 'Public Sans'"),
+      document.fonts.load("600 13px 'Public Sans'"),
+    ]);
+  } catch (e) { /* fall back to system fonts */ }
+
+  /* stats */
+  const moods = range.map((d) => days[d] && days[d].mood).filter(Boolean);
+  const avgMood = moods.length
+    ? moods.reduce((a, b) => a + b, 0) / moods.length
+    : null;
+  const loggedDays = range.filter((d) => isCheckedIn(days[d])).length;
+  const kept = range.reduce((a, d) => {
+    const r = days[d] || {};
+    return a + ((r.done && r.done.length) || 0) + ((r.meals && r.meals.length) || 0);
+  }, 0);
+  const possible = range.length * (habits.length + MEALS.length);
+  const pct = possible ? Math.round((100 * kept) / possible) : 0;
+
+  /* layout */
+  const W = 1200, M = 72, labelW = 330;
+  const rows = habits.length + 2;
+  const gridW = W - M * 2 - labelW;
+  const colW = gridW / range.length;
+  const dotR = Math.max(4.5, Math.min(9, colW * 0.3));
+  const rowH = 46;
+  const headerBase = 96;
+  const statsBase = 196;
+  const moodTop = 290, moodBarMax = 110;
+  const moodAxisY = moodTop + moodBarMax + 30;
+  const gridTitleY = moodAxisY + 64;
+  const gridTop = gridTitleY + 24;
+  const H = gridTop + rows * rowH + 100;
+  const colX = (i) => M + labelW + colW * i + colW / 2;
+
+  const canvas = document.createElement("canvas");
+  const S = 2;
+  canvas.width = W * S;
+  canvas.height = H * S;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(S, S);
+
+  /* background */
+  ctx.fillStyle = RC.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  /* header */
+  ctx.fillStyle = RC.ink;
+  ctx.font = "600 46px Fraunces, Georgia, serif";
+  ctx.fillText("Steady", M, headerBase - 26);
+  ctx.fillStyle = RC.moss;
+  ctx.font = "500 17px 'Public Sans', sans-serif";
+  ctx.fillText("Small days, kept.", M, headerBase + 2);
+  ctx.textAlign = "right";
+  ctx.fillStyle = RC.soft;
+  ctx.font = "600 16px 'Public Sans', sans-serif";
+  ctx.fillText(
+    `${fmtShort(start)} \u2013 ${fmtShort(end)}, ${end.slice(0, 4)}`,
+    W - M, headerBase - 26
+  );
+  ctx.textAlign = "left";
+  ctx.strokeStyle = RC.line;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(M, headerBase + 22);
+  ctx.lineTo(W - M, headerBase + 22);
+  ctx.stroke();
+
+  /* stat row */
+  const stats = [
+    [`${loggedDays} of ${range.length}`, "days checked in"],
+    [`${pct}%`, "habits & meals kept"],
+    [avgMood ? avgMood.toFixed(1) : "\u2013", "avg mood (of 5)"],
+  ];
+  stats.forEach((s, i) => {
+    const x = M + i * ((W - 2 * M) / 3);
+    ctx.fillStyle = RC.ink;
+    ctx.font = "600 40px Fraunces, Georgia, serif";
+    ctx.fillText(s[0], x, statsBase);
+    ctx.fillStyle = RC.moss;
+    ctx.font = "500 15px 'Public Sans', sans-serif";
+    ctx.fillText(s[1], x, statsBase + 26);
+  });
+
+  /* mood bars (aligned to grid columns) */
+  ctx.fillStyle = RC.moss;
+  ctx.font = "600 13px 'Public Sans', sans-serif";
+  ctx.fillText("M O O D", M, moodTop + 6);
+  range.forEach((d, i) => {
+    const m = days[d] && days[d].mood;
+    const x = colX(i);
+    const bw = Math.min(26, colW * 0.55);
+    if (m) {
+      const h = (m / 5) * moodBarMax;
+      ctx.fillStyle = m === 5 ? RC.gold : RC.moss;
+      roundRectPath(ctx, x - bw / 2, moodTop + moodBarMax - h, bw, h, 4);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = RC.line;
+      ctx.fillRect(x - bw / 2, moodTop + moodBarMax - 3, bw, 3);
+    }
+  });
+
+  /* day axis */
+  ctx.fillStyle = RC.soft;
+  ctx.font = "600 12px 'Public Sans', sans-serif";
+  ctx.textAlign = "center";
+  const step = range.length <= 14 ? 1 : Math.ceil(range.length / 10);
+  range.forEach((d, i) => {
+    if (i % step === 0 || i === range.length - 1) {
+      const lbl =
+        range.length <= 7 ? dayLetter(d) : String(parseInt(d.slice(8), 10));
+      ctx.fillText(lbl, colX(i), moodAxisY);
+    }
+  });
+  ctx.textAlign = "left";
+
+  /* stitch grid */
+  ctx.fillStyle = RC.moss;
+  ctx.font = "600 13px 'Public Sans', sans-serif";
+  ctx.fillText("T H E   S T I T C H", M, gridTitleY);
+  const rowDefs = [
+    ...habits.map((h) => ({ type: "habit", h })),
+    { type: "meals" },
+    { type: "sleep" },
+  ];
+  rowDefs.forEach((row, ri) => {
+    const y = gridTop + ri * rowH + rowH / 2;
+    if (ri > 0) {
+      ctx.strokeStyle = RC.line;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(M, y - rowH / 2);
+      ctx.lineTo(W - M, y - rowH / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (row.type === "habit") {
+      ctx.fillStyle = RC.ink;
+      ctx.font = "500 16px 'Public Sans', sans-serif";
+    } else {
+      ctx.fillStyle = RC.moss;
+      ctx.font = "italic 500 15px 'Public Sans', sans-serif";
+    }
+    const label =
+      row.type === "habit"
+        ? row.h.label
+        : row.type === "meals"
+        ? "Meals \u2014 one wedge each"
+        : "Sleep logged";
+    ctx.fillText(truncateText(ctx, label, labelW - 24), M, y + 5);
+
+    range.forEach((d, i) => {
+      const x = colX(i);
+      const r = days[d] || {};
+      if (row.type === "habit") {
+        const done = r.done && r.done.includes(row.h.id);
+        ctx.beginPath();
+        ctx.arc(x, y, dotR, 0, Math.PI * 2);
+        if (done) {
+          ctx.fillStyle = RC.gold;
+          ctx.fill();
+        } else {
+          ctx.fillStyle = RC.bg;
+          ctx.fill();
+          ctx.strokeStyle = RC.line;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      } else if (row.type === "meals") {
+        const c = (r.meals && r.meals.length) || 0;
+        ctx.beginPath();
+        ctx.arc(x, y, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = RC.card;
+        ctx.fill();
+        ctx.strokeStyle = c ? RC.moss : RC.line;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        if (c > 0) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.arc(x, y, dotR, -Math.PI / 2, -Math.PI / 2 + (c / 3) * Math.PI * 2);
+          ctx.closePath();
+          ctx.fillStyle = c === 3 ? RC.gold : RC.moss;
+          ctx.fill();
+        }
+      } else {
+        const slept = r.sleep;
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(3.5, dotR - 1), 0, Math.PI * 2);
+        ctx.strokeStyle = slept ? RC.moss : RC.line;
+        ctx.lineWidth = slept ? 2.5 : 1.5;
+        ctx.stroke();
+      }
+    });
+  });
+
+  /* footer */
+  ctx.fillStyle = RC.soft;
+  ctx.font = "500 13px 'Public Sans', sans-serif";
+  ctx.fillText(
+    "Exported " +
+      new Date().toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+      }),
+    M, H - 40
+  );
+  ctx.textAlign = "right";
+  ctx.fillText("Steady \u00b7 personal log", W - M, H - 40);
+  ctx.textAlign = "left";
+
+  return new Promise((res) => canvas.toBlob((b) => res(b), "image/png"));
+}
 
 /* ------------------------------- app -------------------------------- */
 
@@ -537,7 +792,64 @@ function WeekView({ week, days, habits, streak, weekPct, today }) {
           <p className="hint">No notes yet this week.</p>
         )}
       </section>
+
+      <ReportCard days={days} habits={habits} />
     </main>
+  );
+}
+
+/* ----------------------------- Report card --------------------------- */
+
+function ReportCard({ days, habits }) {
+  const [n, setN] = useState(7);
+  const [busy, setBusy] = useState(false);
+
+  const exportReport = async () => {
+    setBusy(true);
+    try {
+      const blob = await generateReportPNG(days, habits, n);
+      const range = lastNDays(n);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `steady-report-${range[0]}_to_${range[range.length - 1]}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("report export failed", e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="card">
+      <h2 className="card-label">Report</h2>
+      <p className="hint">
+        Exports a snapshot image of this view {"\u2014"} mood, stats, and the full
+        stitch grid for the range you pick.
+      </p>
+      <div className="chip-row">
+        {[
+          [7, "Past week"],
+          [14, "Two weeks"],
+          [30, "Thirty days"],
+        ].map(([v, l]) => (
+          <button
+            key={v}
+            className={"chip" + (n === v ? " sel" : "")}
+            onClick={() => setN(v)}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+      <button className="primary" disabled={busy} onClick={exportReport}>
+        {busy ? "Building\u2026" : "Export report (PNG)"}
+      </button>
+    </section>
   );
 }
 

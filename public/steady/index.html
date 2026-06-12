@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Steady</title>
+<meta name="theme-color" content="#EDEFE8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Steady" />
+<meta name="robots" content="noindex, nofollow" />
+<style>html, body { margin: 0; background: #EDEFE8; }</style>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ----------------------------- constants ----------------------------- */
+
+const STORAGE_KEY = "steady-tracker-v1";
+
+const PILLARS = {
+  eating: { label: "Eating" },
+  fitness: { label: "Movement" },
+  behavior: { label: "Boundaries" },
+};
+
+const DEFAULT_HABITS = [
+  { id: "h1", label: "Ate a real meal, not a desk graze", pillar: "eating" },
+  { id: "h2", label: "Moved for 20 minutes", pillar: "fitness" },
+  { id: "h3", label: "Hard stop on work", pillar: "behavior" },
+  { id: "h4", label: "Screens down before bed", pillar: "behavior" },
+  { id: "h5", label: "One thing just for me", pillar: "behavior" },
+];
+
+const MOODS = [
+  { v: 1, label: "Rough" },
+  { v: 2, label: "Low" },
+  { v: 3, label: "Okay" },
+  { v: 4, label: "Good" },
+  { v: 5, label: "Strong" },
+];
+
+const SLEEP_OPTS = ["<6", "6\u20137", "7\u20138", "8+"];
+
+/* ------------------------------ helpers ------------------------------ */
+
+const localDateStr = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const lastNDays = (n) => {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    out.push(localDateStr(d));
+  }
+  return out;
+};
+
+const dayLetter = (dateStr) =>
+  ["S", "M", "T", "W", "T", "F", "S"][new Date(dateStr + "T12:00:00").getDay()];
+
+const friendlyToday = () =>
+  new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+const isCheckedIn = (rec) =>
+  rec && (rec.mood || rec.sleep || (rec.done && rec.done.length) || rec.note);
+
+const computeStreak = (days) => {
+  let streak = 0;
+  const d = new Date();
+  // today counts if checked in; otherwise start from yesterday
+  if (!isCheckedIn(days[localDateStr(d)])) d.setDate(d.getDate() - 1);
+  while (isCheckedIn(days[localDateStr(d)])) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+};
+
+/* ------------------------------- app -------------------------------- */
+
+function SteadyApp() {
+  const [loaded, setLoaded] = useState(false);
+  const [habits, setHabits] = useState(DEFAULT_HABITS);
+  const [days, setDays] = useState({});
+  const [view, setView] = useState("today"); // today | week | habits
+  const [savedFlash, setSavedFlash] = useState(false);
+  const saveTimer = useRef(null);
+  const today = localDateStr();
+  const rec = days[today] || { mood: null, sleep: null, done: [], note: "" };
+
+  /* load once */
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.habits && data.habits.length) setHabits(data.habits);
+          if (data.days) setDays(data.days);
+        }
+      } catch (e) {
+        /* first run — nothing saved yet */
+      }
+      setLoaded(true);
+    })();
+  }, []);
+
+  /* debounced save */
+  const persist = useCallback((nextHabits, nextDays) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ habits: nextHabits, days: nextDays })
+        );
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 1200);
+      } catch (e) {
+        console.error("save failed", e);
+      }
+    }, 500);
+  }, []);
+
+  const updateToday = (patch) => {
+    const next = { ...days, [today]: { ...rec, ...patch } };
+    setDays(next);
+    persist(habits, next);
+  };
+
+  const toggleHabit = (id) => {
+    const done = rec.done || [];
+    updateToday({
+      done: done.includes(id) ? done.filter((x) => x !== id) : [...done, id],
+    });
+  };
+
+  const addHabit = (label, pillar) => {
+    const next = [
+      ...habits,
+      { id: "h" + Date.now(), label: label.trim(), pillar },
+    ];
+    setHabits(next);
+    persist(next, days);
+  };
+
+  const removeHabit = (id) => {
+    const next = habits.filter((h) => h.id !== id);
+    setHabits(next);
+    persist(next, days);
+  };
+
+  const exportData = () => {
+    const blob = new Blob(
+      [JSON.stringify({ habits, days, exported: new Date().toISOString() }, null, 2)],
+      { type: "application/json" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `steady-backup-${localDateStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file, onResult) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || !Array.isArray(data.habits) || typeof data.days !== "object") {
+          onResult("That file doesn't look like a Steady backup.");
+          return;
+        }
+        // Backup fills in history; anything logged since the backup stays intact.
+        const mergedDays = { ...data.days, ...days };
+        const nextHabits = data.habits.length ? data.habits : habits;
+        setHabits(nextHabits);
+        setDays(mergedDays);
+        persist(nextHabits, mergedDays);
+        onResult(`Restored ${Object.keys(data.days).length} days from backup.`);
+      } catch (e) {
+        onResult("Couldn't read that file. Make sure it's a Steady backup (.json).");
+      }
+    };
+    reader.onerror = () => onResult("Couldn't read that file.");
+    reader.readAsText(file);
+  };
+
+  /* derived stats */
+  const week = lastNDays(7);
+  const streak = computeStreak(days);
+  const weekDone = week.reduce((acc, d) => {
+    const r = days[d];
+    return acc + (r && r.done ? r.done.length : 0);
+  }, 0);
+  const weekPossible = week.filter((d) => d <= today).length * habits.length;
+  const weekPct = weekPossible ? Math.round((100 * weekDone) / weekPossible) : 0;
+
+  if (!loaded)
+    return (
+      <div style={{ fontFamily: "Georgia, serif", padding: 48, textAlign: "center", color: "#51695D" }}>
+        Opening your log…
+      </div>
+    );
+
+  return (
+    <div className="steady-root">
+      <style>{CSS}</style>
+
+      <header className="hdr">
+        <div className="hdr-top">
+          <h1 className="wordmark">Steady</h1>
+          <span className={"saved" + (savedFlash ? " on" : "")}>Saved</span>
+        </div>
+        <p className="tagline">Small days, kept.</p>
+      </header>
+
+      <nav className="tabs" role="tablist">
+        {[
+          ["today", "Today"],
+          ["week", "Week"],
+          ["habits", "Habits"],
+        ].map(([k, label]) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={view === k}
+            className={"tab" + (view === k ? " active" : "")}
+            onClick={() => setView(k)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {view === "today" && (
+        <TodayView
+          rec={rec}
+          habits={habits}
+          updateToday={updateToday}
+          toggleHabit={toggleHabit}
+          streak={streak}
+        />
+      )}
+      {view === "week" && (
+        <WeekView week={week} days={days} habits={habits} streak={streak} weekPct={weekPct} today={today} />
+      )}
+      {view === "habits" && (
+        <HabitsView
+          habits={habits}
+          addHabit={addHabit}
+          removeHabit={removeHabit}
+          exportData={exportData}
+          importData={importData}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------- Today view ---------------------------- */
+
+function TodayView({ rec, habits, updateToday, toggleHabit, streak }) {
+  const doneCount = (rec.done || []).length;
+  const grouped = ["eating", "fitness", "behavior"].map((p) => ({
+    pillar: p,
+    items: habits.filter((h) => h.pillar === p),
+  }));
+
+  return (
+    <main>
+      <div className="datebar">
+        <span className="dateline">{friendlyToday()}</span>
+        {streak > 0 && <span className="streak">{streak} day{streak > 1 ? "s" : ""} in a row</span>}
+      </div>
+
+      <section className="card">
+        <h2 className="card-label">Mood</h2>
+        <div className="mood-row">
+          {MOODS.map((m) => (
+            <button
+              key={m.v}
+              className={"mood" + (rec.mood === m.v ? " sel" : "")}
+              onClick={() => updateToday({ mood: rec.mood === m.v ? null : m.v })}
+              aria-pressed={rec.mood === m.v}
+            >
+              <span className="mood-dot" data-v={m.v} />
+              <span className="mood-name">{m.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2 className="card-label">Sleep last night</h2>
+        <div className="chip-row">
+          {SLEEP_OPTS.map((s) => (
+            <button
+              key={s}
+              className={"chip" + (rec.sleep === s ? " sel" : "")}
+              onClick={() => updateToday({ sleep: rec.sleep === s ? null : s })}
+              aria-pressed={rec.sleep === s}
+            >
+              {s} hrs
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h2 className="card-label">Habits</h2>
+          <span className="counter">
+            {doneCount} of {habits.length}
+          </span>
+        </div>
+        {grouped.map(
+          (g) =>
+            g.items.length > 0 && (
+              <div key={g.pillar} className="pillar-block">
+                <div className="pillar-name">{PILLARS[g.pillar].label}</div>
+                {g.items.map((h) => {
+                  const checked = (rec.done || []).includes(h.id);
+                  return (
+                    <button
+                      key={h.id}
+                      className={"habit" + (checked ? " done" : "")}
+                      onClick={() => toggleHabit(h.id)}
+                      aria-pressed={checked}
+                    >
+                      <span className="box">{checked ? "\u2713" : ""}</span>
+                      <span className="habit-label">{h.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )
+        )}
+      </section>
+
+      <section className="card">
+        <h2 className="card-label">One line about today</h2>
+        <textarea
+          className="note"
+          rows={2}
+          placeholder="Optional. What's worth remembering?"
+          value={rec.note || ""}
+          onChange={(e) => updateToday({ note: e.target.value })}
+        />
+      </section>
+
+      <p className="foot-note">
+        Everything saves as you go. A partial check-in still counts.
+      </p>
+    </main>
+  );
+}
+
+/* ----------------------------- Week view ----------------------------- */
+
+function WeekView({ week, days, habits, streak, weekPct, today }) {
+  return (
+    <main>
+      <div className="stats-row">
+        <div className="stat">
+          <div className="stat-num">{streak}</div>
+          <div className="stat-label">day streak</div>
+        </div>
+        <div className="stat">
+          <div className="stat-num">{weekPct}%</div>
+          <div className="stat-label">habits this week</div>
+        </div>
+      </div>
+
+      <section className="card">
+        <h2 className="card-label">Mood, this week</h2>
+        <div className="spark">
+          {week.map((d) => {
+            const m = days[d] && days[d].mood;
+            return (
+              <div key={d} className="spark-col">
+                <div className="spark-track">
+                  {m ? (
+                    <div
+                      className="spark-bar"
+                      style={{ height: `${m * 20}%` }}
+                      title={MOODS[m - 1].label}
+                    />
+                  ) : (
+                    <div className="spark-empty" />
+                  )}
+                </div>
+                <div className={"spark-day" + (d === today ? " is-today" : "")}>{dayLetter(d)}</div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2 className="card-label">The stitch</h2>
+        <p className="hint">Each dot is one habit kept. Consistency reads as texture, not perfection.</p>
+        <div className="stitch">
+          {habits.map((h) => (
+            <div key={h.id} className="stitch-row">
+              <span className="stitch-name">{h.label}</span>
+              <span className="stitch-dots">
+                {week.map((d) => {
+                  const done = days[d] && days[d].done && days[d].done.includes(h.id);
+                  const future = d > today;
+                  return (
+                    <span
+                      key={d}
+                      className={"dot" + (done ? " filled" : "") + (future ? " future" : "")}
+                    />
+                  );
+                })}
+              </span>
+            </div>
+          ))}
+          <div className="stitch-row legend">
+            <span className="stitch-name sleep-name">Sleep logged</span>
+            <span className="stitch-dots">
+              {week.map((d) => {
+                const slept = days[d] && days[d].sleep;
+                return <span key={d} className={"dot ring" + (slept ? " filled" : "")} />;
+              })}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2 className="card-label">Notes</h2>
+        {week
+          .filter((d) => days[d] && days[d].note)
+          .reverse()
+          .map((d) => (
+            <div key={d} className="note-line">
+              <span className="note-date">
+                {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" })}
+              </span>
+              <span className="note-text">{days[d].note}</span>
+            </div>
+          ))}
+        {week.every((d) => !(days[d] && days[d].note)) && (
+          <p className="hint">No notes yet this week.</p>
+        )}
+      </section>
+    </main>
+  );
+}
+
+/* ---------------------------- Habits view ---------------------------- */
+
+function HabitsView({ habits, addHabit, removeHabit, exportData, importData }) {
+  const [label, setLabel] = useState("");
+  const [pillar, setPillar] = useState("behavior");
+  const [importMsg, setImportMsg] = useState("");
+  const fileRef = useRef(null);
+  const overFive = habits.length >= 6;
+
+  return (
+    <main>
+      <section className="card">
+        <h2 className="card-label">Your habits</h2>
+        <p className="hint">
+          Five or fewer sticks best. Master the small list, then expand.
+        </p>
+        {habits.map((h) => (
+          <div key={h.id} className="manage-row">
+            <div>
+              <div className="manage-label">{h.label}</div>
+              <div className="manage-pillar">{PILLARS[h.pillar].label}</div>
+            </div>
+            <button className="remove" onClick={() => removeHabit(h.id)} aria-label={`Remove ${h.label}`}>
+              Remove
+            </button>
+          </div>
+        ))}
+      </section>
+
+      <section className="card">
+        <h2 className="card-label">Add a habit</h2>
+        {overFive && (
+          <p className="warn">
+            You're at {habits.length}. Adding more usually means keeping fewer.
+          </p>
+        )}
+        <input
+          className="text-input"
+          placeholder="Keep it specific and small"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+        <div className="chip-row" style={{ marginTop: 10 }}>
+          {Object.entries(PILLARS).map(([k, p]) => (
+            <button
+              key={k}
+              className={"chip" + (pillar === k ? " sel" : "")}
+              onClick={() => setPillar(k)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <button
+          className="primary"
+          disabled={!label.trim()}
+          onClick={() => {
+            addHabit(label, pillar);
+            setLabel("");
+          }}
+        >
+          Add habit
+        </button>
+      </section>
+
+      <section className="card">
+        <h2 className="card-label">Backup</h2>
+        <p className="hint">
+          Your log lives in this browser only. Export a copy now and then;
+          restoring fills in history without overwriting days logged since.
+        </p>
+        <div className="backup-row">
+          <button className="secondary" onClick={exportData}>
+            Export backup
+          </button>
+          <button className="secondary" onClick={() => fileRef.current && fileRef.current.click()}>
+            Restore from file
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files && e.target.files[0];
+              if (f) importData(f, setImportMsg);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        {importMsg && <p className="import-msg">{importMsg}</p>}
+      </section>
+    </main>
+  );
+}
+
+/* -------------------------------- css -------------------------------- */
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Public+Sans:wght@400;500;600&display=swap');
+
+.steady-root {
+  --ink: #22332C;
+  --moss: #51695D;
+  --soft: #8C9C90;
+  --bg: #EDEFE8;
+  --card: #FAFBF7;
+  --line: #D9DED2;
+  --gold: #BD8328;
+  --gold-soft: #E9D9BC;
+  font-family: 'Public Sans', -apple-system, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px 16px 56px;
+  box-sizing: border-box;
+}
+.steady-root *, .steady-root *::before, .steady-root *::after { box-sizing: border-box; }
+.steady-root button { font-family: inherit; cursor: pointer; }
+.steady-root button:focus-visible, .steady-root input:focus-visible, .steady-root textarea:focus-visible {
+  outline: 2px solid var(--gold); outline-offset: 2px;
+}
+
+.hdr-top { display: flex; align-items: baseline; justify-content: space-between; }
+.wordmark {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600; font-size: 30px; letter-spacing: -0.01em; margin: 0;
+}
+.saved {
+  font-size: 12px; color: var(--gold); opacity: 0; transition: opacity .3s; font-weight: 600;
+}
+.saved.on { opacity: 1; }
+.tagline { margin: 2px 0 0; color: var(--moss); font-size: 14px; }
+
+.tabs {
+  display: flex; gap: 4px; margin: 18px 0 14px;
+  border-bottom: 1px solid var(--line); padding-bottom: 0;
+}
+.tab {
+  background: none; border: none; padding: 8px 12px 10px;
+  font-size: 14px; font-weight: 600; color: var(--soft);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+
+.datebar { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.dateline { font-family: 'Fraunces', Georgia, serif; font-size: 17px; }
+.streak { font-size: 12px; font-weight: 600; color: var(--gold); }
+
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px; margin-bottom: 12px;
+}
+.card-head { display: flex; justify-content: space-between; align-items: baseline; }
+.card-label {
+  margin: 0 0 10px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--moss); font-weight: 600;
+}
+.counter { font-size: 12px; color: var(--soft); font-weight: 600; }
+
+.mood-row { display: flex; gap: 6px; }
+.mood {
+  flex: 1; background: none; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: border-color .15s, background .15s;
+}
+.mood.sel { border-color: var(--ink); background: #fff; }
+.mood-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
+.mood.sel .mood-dot[data-v="1"] { background: #A8B0A6; }
+.mood.sel .mood-dot[data-v="2"] { background: #8C9C90; }
+.mood.sel .mood-dot[data-v="3"] { background: #6E8474; }
+.mood.sel .mood-dot[data-v="4"] { background: #51695D; }
+.mood.sel .mood-dot[data-v="5"] { background: var(--gold); }
+.mood-name { font-size: 11px; color: var(--moss); font-weight: 500; }
+.mood.sel .mood-name { color: var(--ink); font-weight: 600; }
+
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--line); background: none; border-radius: 999px;
+  padding: 7px 14px; font-size: 13px; font-weight: 500; color: var(--moss);
+}
+.chip.sel { background: var(--ink); border-color: var(--ink); color: #FAFBF7; }
+
+.pillar-block { margin-top: 12px; }
+.pillar-name { font-size: 11px; color: var(--soft); font-weight: 600; margin-bottom: 6px; }
+.habit {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  background: none; border: none; padding: 9px 4px; text-align: left;
+  border-radius: 8px;
+}
+.habit:active { background: var(--bg); }
+.box {
+  width: 22px; height: 22px; flex: none; border: 1.5px solid var(--moss); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #FAFBF7; transition: background .15s, border-color .15s;
+}
+.habit.done .box { background: var(--gold); border-color: var(--gold); }
+.habit-label { font-size: 15px; }
+.habit.done .habit-label { color: var(--moss); }
+
+.note {
+  width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+  font-family: inherit; font-size: 14px; resize: vertical; background: #fff; color: var(--ink);
+}
+.foot-note { text-align: center; font-size: 12px; color: var(--soft); margin-top: 4px; }
+
+.stats-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.stat {
+  flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; text-align: center;
+}
+.stat-num { font-family: 'Fraunces', Georgia, serif; font-size: 30px; font-weight: 600; }
+.stat-label { font-size: 12px; color: var(--moss); }
+
+.spark { display: flex; gap: 8px; align-items: flex-end; }
+.spark-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.spark-track { height: 64px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.spark-bar { width: 60%; max-width: 26px; border-radius: 5px 5px 2px 2px; background: var(--moss); }
+.spark-empty { width: 60%; max-width: 26px; height: 4px; border-radius: 2px; background: var(--line); }
+.spark-day { font-size: 11px; color: var(--soft); font-weight: 600; }
+.spark-day.is-today { color: var(--gold); }
+
+.hint { font-size: 13px; color: var(--soft); margin: 0 0 12px; }
+.stitch-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+.stitch-row:last-child { border-bottom: none; }
+.stitch-name { flex: 1; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sleep-name { color: var(--moss); font-style: italic; }
+.stitch-dots { display: flex; gap: 7px; flex: none; }
+.dot {
+  width: 13px; height: 13px; border-radius: 50%; background: var(--bg);
+  border: 1px solid var(--line);
+}
+.dot.filled { background: var(--gold); border-color: var(--gold); }
+.dot.ring.filled { background: none; border: 2.5px solid var(--moss); }
+.dot.future { opacity: .35; }
+
+.note-line { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; }
+.note-date { color: var(--soft); font-weight: 600; flex: none; width: 36px; font-size: 12px; padding-top: 2px; }
+.note-text { color: var(--ink); }
+
+.manage-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.manage-row:last-child { border-bottom: none; }
+.manage-label { font-size: 14px; }
+.manage-pillar { font-size: 11px; color: var(--soft); }
+.remove {
+  background: none; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 12px; color: var(--moss); padding: 6px 10px; flex: none;
+}
+.warn { font-size: 13px; color: var(--gold); margin: 0 0 10px; font-weight: 500; }
+.text-input {
+  width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+  font-family: inherit; font-size: 14px; background: #fff; color: var(--ink);
+}
+.primary {
+  margin-top: 12px; width: 100%; background: var(--ink); color: #FAFBF7;
+  border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600;
+}
+.primary:disabled { opacity: .4; cursor: default; }
+
+.backup-row { display: flex; gap: 8px; }
+.secondary {
+  flex: 1; background: none; border: 1px solid var(--moss); color: var(--moss);
+  border-radius: 10px; padding: 11px 8px; font-size: 13px; font-weight: 600;
+}
+.secondary:active { background: var(--bg); }
+.import-msg { font-size: 13px; color: var(--gold); font-weight: 500; margin: 10px 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .steady-root * { transition: none !important; }
+}
+`;
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<SteadyApp />);
+</script>
+</body>
+</html>

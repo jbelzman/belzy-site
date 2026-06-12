@@ -24,18 +24,34 @@ const { useState, useEffect, useRef, useCallback } = React;
 const STORAGE_KEY = "steady-tracker-v1";
 
 const PILLARS = {
-  eating: { label: "Eating" },
-  fitness: { label: "Movement" },
-  behavior: { label: "Boundaries" },
+  food: { label: "Food" },
+  body: { label: "Body" },
+  boundaries: { label: "Boundaries" },
+  people: { label: "People" },
 };
 
 const DEFAULT_HABITS = [
-  { id: "h1", label: "Ate a real meal, not a desk graze", pillar: "eating" },
-  { id: "h2", label: "Moved for 20 minutes", pillar: "fitness" },
-  { id: "h3", label: "Hard stop on work", pillar: "behavior" },
-  { id: "h4", label: "Screens down before bed", pillar: "behavior" },
-  { id: "h5", label: "One thing just for me", pillar: "behavior" },
+  { id: "b1", label: "Moved for 20 minutes", pillar: "body" },
+  { id: "b2", label: "Worked out (more than a walk)", pillar: "body" },
+  { id: "b3", label: "Breathwork", pillar: "body" },
+  { id: "n1", label: "Hard stop on work", pillar: "boundaries" },
+  { id: "n2", label: "Screens down before bed", pillar: "boundaries" },
+  { id: "n3", label: "One thing just for me", pillar: "boundaries" },
+  { id: "p1", label: "Made small talk", pillar: "people" },
+  { id: "p2", label: "Showed grace", pillar: "people" },
 ];
+
+const MEALS = ["Breakfast", "Lunch", "Dinner"];
+
+/* migrate data saved under the original pillar names / default list */
+const OLD_PILLAR_MAP = { eating: "food", fitness: "body", behavior: "boundaries" };
+const migrateHabits = (stored) => {
+  const oldDefaultIds = ["h1", "h2", "h3", "h4", "h5"];
+  const isOldDefaults =
+    stored.length === 5 && stored.every((h) => oldDefaultIds.includes(h.id));
+  if (isOldDefaults) return DEFAULT_HABITS;
+  return stored.map((h) => ({ ...h, pillar: OLD_PILLAR_MAP[h.pillar] || h.pillar }));
+};
 
 const MOODS = [
   { v: 1, label: "Rough" },
@@ -77,7 +93,12 @@ const friendlyToday = () =>
   });
 
 const isCheckedIn = (rec) =>
-  rec && (rec.mood || rec.sleep || (rec.done && rec.done.length) || rec.note);
+  rec &&
+  (rec.mood ||
+    rec.sleep ||
+    (rec.done && rec.done.length) ||
+    (rec.meals && rec.meals.length) ||
+    rec.note);
 
 const computeStreak = (days) => {
   let streak = 0;
@@ -101,7 +122,7 @@ function SteadyApp() {
   const [savedFlash, setSavedFlash] = useState(false);
   const saveTimer = useRef(null);
   const today = localDateStr();
-  const rec = days[today] || { mood: null, sleep: null, done: [], note: "" };
+  const rec = days[today] || { mood: null, sleep: null, done: [], meals: [], note: "" };
 
   /* load once */
   useEffect(() => {
@@ -110,7 +131,7 @@ function SteadyApp() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const data = JSON.parse(raw);
-          if (data.habits && data.habits.length) setHabits(data.habits);
+          if (data.habits && data.habits.length) setHabits(migrateHabits(data.habits));
           if (data.days) setDays(data.days);
         }
       } catch (e) {
@@ -147,6 +168,13 @@ function SteadyApp() {
     const done = rec.done || [];
     updateToday({
       done: done.includes(id) ? done.filter((x) => x !== id) : [...done, id],
+    });
+  };
+
+  const toggleMeal = (m) => {
+    const meals = rec.meals || [];
+    updateToday({
+      meals: meals.includes(m) ? meals.filter((x) => x !== m) : [...meals, m],
     });
   };
 
@@ -209,9 +237,14 @@ function SteadyApp() {
   const streak = computeStreak(days);
   const weekDone = week.reduce((acc, d) => {
     const r = days[d];
-    return acc + (r && r.done ? r.done.length : 0);
+    return (
+      acc +
+      (r && r.done ? r.done.length : 0) +
+      (r && r.meals ? r.meals.length : 0)
+    );
   }, 0);
-  const weekPossible = week.filter((d) => d <= today).length * habits.length;
+  const weekPossible =
+    week.filter((d) => d <= today).length * (habits.length + MEALS.length);
   const weekPct = weekPossible ? Math.round((100 * weekDone) / weekPossible) : 0;
 
   if (!loaded)
@@ -257,6 +290,7 @@ function SteadyApp() {
           habits={habits}
           updateToday={updateToday}
           toggleHabit={toggleHabit}
+          toggleMeal={toggleMeal}
           streak={streak}
         />
       )}
@@ -278,9 +312,9 @@ function SteadyApp() {
 
 /* ----------------------------- Today view ---------------------------- */
 
-function TodayView({ rec, habits, updateToday, toggleHabit, streak }) {
+function TodayView({ rec, habits, updateToday, toggleHabit, toggleMeal, streak }) {
   const doneCount = (rec.done || []).length;
-  const grouped = ["eating", "fitness", "behavior"].map((p) => ({
+  const grouped = ["food", "body", "boundaries", "people"].map((p) => ({
     pillar: p,
     items: habits.filter((h) => h.pillar === p),
   }));
@@ -327,6 +361,29 @@ function TodayView({ rec, habits, updateToday, toggleHabit, streak }) {
 
       <section className="card">
         <div className="card-head">
+          <h2 className="card-label">Meals</h2>
+          <span className="counter">{(rec.meals || []).length} of 3</span>
+        </div>
+        <p className="hint">Tap the ones you actually sat down and ate.</p>
+        <div className="chip-row">
+          {MEALS.map((m) => {
+            const sel = (rec.meals || []).includes(m);
+            return (
+              <button
+                key={m}
+                className={"chip meal" + (sel ? " sel" : "")}
+                onClick={() => toggleMeal(m)}
+                aria-pressed={sel}
+              >
+                {m}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
           <h2 className="card-label">Habits</h2>
           <span className="counter">
             {doneCount} of {habits.length}
@@ -357,11 +414,11 @@ function TodayView({ rec, habits, updateToday, toggleHabit, streak }) {
       </section>
 
       <section className="card">
-        <h2 className="card-label">One line about today</h2>
+        <h2 className="card-label">Wins &amp; notes</h2>
         <textarea
           className="note"
           rows={2}
-          placeholder="Optional. What's worth remembering?"
+          placeholder="Small wins count. What went right today?"
           value={rec.note || ""}
           onChange={(e) => updateToday({ note: e.target.value })}
         />
@@ -437,6 +494,21 @@ function WeekView({ week, days, habits, streak, weekPct, today }) {
             </div>
           ))}
           <div className="stitch-row legend">
+            <span className="stitch-name sleep-name">Meals — one wedge each</span>
+            <span className="stitch-dots">
+              {week.map((d) => {
+                const count = (days[d] && days[d].meals && days[d].meals.length) || 0;
+                const future = d > today;
+                return (
+                  <span
+                    key={d}
+                    className={"dot meal-" + count + (future ? " future" : "")}
+                  />
+                );
+              })}
+            </span>
+          </div>
+          <div className="stitch-row legend">
             <span className="stitch-name sleep-name">Sleep logged</span>
             <span className="stitch-dots">
               {week.map((d) => {
@@ -473,17 +545,18 @@ function WeekView({ week, days, habits, streak, weekPct, today }) {
 
 function HabitsView({ habits, addHabit, removeHabit, exportData, importData }) {
   const [label, setLabel] = useState("");
-  const [pillar, setPillar] = useState("behavior");
+  const [pillar, setPillar] = useState("boundaries");
   const [importMsg, setImportMsg] = useState("");
   const fileRef = useRef(null);
-  const overFive = habits.length >= 6;
+  const tooMany = habits.length >= 10;
 
   return (
     <main>
       <section className="card">
         <h2 className="card-label">Your habits</h2>
         <p className="hint">
-          Five or fewer sticks best. Master the small list, then expand.
+          The list only works if it stays scannable. If something hasn't been
+          checked in two weeks, shrink it or cut it.
         </p>
         {habits.map((h) => (
           <div key={h.id} className="manage-row">
@@ -500,7 +573,7 @@ function HabitsView({ habits, addHabit, removeHabit, exportData, importData }) {
 
       <section className="card">
         <h2 className="card-label">Add a habit</h2>
-        {overFive && (
+        {tooMany && (
           <p className="warn">
             You're at {habits.length}. Adding more usually means keeping fewer.
           </p>
@@ -704,7 +777,17 @@ const CSS = `
   border: 1px solid var(--line);
 }
 .dot.filled { background: var(--gold); border-color: var(--gold); }
-.dot.ring.filled { background: none; border: 2.5px solid var(--moss); }
+.dot.ring { background: #FAFBF7; border: 1.5px solid var(--line); }
+.dot.ring.filled { background: #FAFBF7; border: 2.5px solid var(--moss); }
+.dot.meal-1 {
+  background: conic-gradient(var(--moss) 0deg 120deg, #FAFBF7 120deg 360deg);
+  border-color: var(--moss);
+}
+.dot.meal-2 {
+  background: conic-gradient(var(--moss) 0deg 240deg, #FAFBF7 240deg 360deg);
+  border-color: var(--moss);
+}
+.dot.meal-3 { background: var(--gold); border-color: var(--gold); }
 .dot.future { opacity: .35; }
 
 .note-line { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; }
